@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import { mockClaims } from '../services/claimService'
+import api from '../services/api'
 
 const STATUS_CONFIG = {
   APPROVED:     { color: 'text-green-400',  bg: 'bg-green-500/10 border-green-500/20',  dot: 'bg-green-400' },
@@ -38,8 +39,21 @@ export default function Dashboard() {
   const [activeTab, setActiveTab] = useState('all')
   const [loading, setLoading] = useState(true)
 
+  // ✅ UPDATED useEffect (API Integration)
   useEffect(() => {
-    setTimeout(() => { setClaims(mockClaims); setLoading(false) }, 800)
+    const fetchClaims = async () => {
+      try {
+        const response = await api.get('/claims/')
+        setClaims(response.data)
+      } catch (err) {
+        console.warn('Using mock data:', err.message)
+        setClaims(mockClaims)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchClaims()
   }, [])
 
   const tabs = [
@@ -52,8 +66,8 @@ export default function Dashboard() {
   const filtered = claims.filter(tabs.find(t => t.id === activeTab)?.filter || (() => true))
 
   const stats = [
-    { label: 'Total Claims',   value: claims.length,                                              icon: '📋', color: 'text-cyan-accent' },
-    { label: 'Approved',       value: claims.filter(c => c.status === 'APPROVED').length,          icon: '✅', color: 'text-green-400' },
+    { label: 'Total Claims',   value: claims.length, icon: '📋', color: 'text-cyan-accent' },
+    { label: 'Approved',       value: claims.filter(c => c.status === 'APPROVED').length, icon: '✅', color: 'text-green-400' },
     { label: 'Under Review',   value: claims.filter(c => ['UNDER_REVIEW','SUBMITTED'].includes(c.status)).length, icon: '⏳', color: 'text-orange-400' },
     { label: 'Fraud Detected', value: claims.filter(c => c.fraud_risk === 'high' || c.fraud_risk === 'critical').length, icon: '🚨', color: 'text-red-400' },
   ]
@@ -73,7 +87,9 @@ export default function Dashboard() {
             <p className="text-slate-400 font-body text-sm mt-1">{user?.email}</p>
           </div>
           <Link to="/claim" className="btn-primary flex items-center gap-2 self-start md:self-auto">
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4"/></svg>
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 4v16m8-8H4"/>
+            </svg>
             New Claim
           </Link>
         </div>
@@ -89,32 +105,6 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-          <button onClick={() => navigate('/claim')}
-            className="card group flex items-center gap-4 hover:scale-[1.02] transition-transform cursor-pointer text-left">
-            <div className="w-12 h-12 rounded-xl bg-cyan-accent/10 border border-cyan-accent/20 flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">📸</div>
-            <div>
-              <p className="font-display font-semibold text-white">File New Claim</p>
-              <p className="text-slate-400 text-xs font-body mt-0.5">Upload media & incident details</p>
-            </div>
-          </button>
-          <div className="card flex items-center gap-4 opacity-60 cursor-not-allowed">
-            <div className="w-12 h-12 rounded-xl bg-navy-700/50 flex items-center justify-center text-2xl">📊</div>
-            <div>
-              <p className="font-display font-semibold text-white">Analytics</p>
-              <p className="text-slate-400 text-xs font-body mt-0.5">Coming soon</p>
-            </div>
-          </div>
-          <div className="card flex items-center gap-4 opacity-60 cursor-not-allowed">
-            <div className="w-12 h-12 rounded-xl bg-navy-700/50 flex items-center justify-center text-2xl">🏦</div>
-            <div>
-              <p className="font-display font-semibold text-white">Disbursements</p>
-              <p className="text-slate-400 text-xs font-body mt-0.5">Coming soon</p>
-            </div>
-          </div>
-        </div>
-
         {/* Claims Table */}
         <div className="card">
           <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
@@ -124,7 +114,9 @@ export default function Dashboard() {
                 <button key={t.id} onClick={() => setActiveTab(t.id)}
                   className={`px-4 py-2 rounded-lg text-xs font-display font-semibold transition-all ${
                     activeTab === t.id ? 'bg-cyan-accent text-navy-900' : 'text-slate-400 hover:text-white'
-                  }`}>{t.label}</button>
+                  }`}>
+                  {t.label}
+                </button>
               ))}
             </div>
           </div>
@@ -137,7 +129,6 @@ export default function Dashboard() {
             <div className="text-center py-16">
               <div className="text-5xl mb-4">📭</div>
               <p className="font-display text-lg font-semibold text-white mb-2">No claims found</p>
-              <p className="text-slate-400 text-sm font-body mb-6">File your first claim to get started</p>
               <Link to="/claim" className="btn-primary">File a Claim</Link>
             </div>
           ) : (
@@ -146,35 +137,23 @@ export default function Dashboard() {
                 <thead>
                   <tr className="border-b border-white/5">
                     {['Claim No.', 'Description', 'Location', 'Date', 'Status', 'Amount', ''].map(h => (
-                      <th key={h} className="text-left text-xs font-body font-medium text-slate-500 uppercase tracking-wider pb-3 pr-4">{h}</th>
+                      <th key={h} className="text-left text-xs text-slate-500 pb-3 pr-4">{h}</th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-white/5">
+                <tbody>
                   {filtered.map(claim => (
-                    <tr key={claim.id} className="hover:bg-white/2 transition-colors">
-                      <td className="py-4 pr-4">
-                        <span className="font-display text-sm font-semibold text-cyan-accent">{claim.claim_number}</span>
-                      </td>
-                      <td className="py-4 pr-4">
-                        <p className="text-sm text-white font-body truncate max-w-[180px]">{claim.incident_description}</p>
-                      </td>
-                      <td className="py-4 pr-4">
-                        <p className="text-xs text-slate-400 font-body">{claim.incident_location}</p>
-                      </td>
-                      <td className="py-4 pr-4">
-                        <p className="text-xs text-slate-400 font-body">{new Date(claim.created_at).toLocaleDateString('en-IN')}</p>
-                      </td>
-                      <td className="py-4 pr-4"><StatusBadge status={claim.status} /></td>
-                      <td className="py-4 pr-4">
-                        {claim.approved_amount
-                          ? <span className="text-green-400 font-display font-semibold text-sm">₹{claim.approved_amount.toLocaleString('en-IN')}</span>
-                          : <span className="text-slate-500 text-sm">—</span>
-                        }
+                    <tr key={claim.id}>
+                      <td className="py-4">{claim.claim_number}</td>
+                      <td className="py-4">{claim.incident_description}</td>
+                      <td className="py-4">{claim.incident_location}</td>
+                      <td className="py-4">{new Date(claim.created_at).toLocaleDateString('en-IN')}</td>
+                      <td className="py-4"><StatusBadge status={claim.status} /></td>
+                      <td className="py-4">
+                        {claim.approved_amount ? `₹${claim.approved_amount}` : '—'}
                       </td>
                       <td className="py-4">
-                        <button onClick={() => navigate('/result', { state: { claimId: claim.id } })}
-                          className="text-xs font-body text-cyan-accent hover:text-white border border-cyan-accent/30 hover:border-white/30 px-3 py-1.5 rounded-lg transition-all">
+                        <button onClick={() => navigate('/result', { state: { claimId: claim.id } })}>
                           View
                         </button>
                       </td>
