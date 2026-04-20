@@ -1,12 +1,22 @@
-import api from './api'
+import axios from 'axios'
 
-export const authService = {
-  async register(data) {
-    const res = await api.post('/auth/register', data)
+const API = axios.create({
+  baseURL: 'http://127.0.0.1:8000/api/v1'
+})
+
+const authService = {
+  login: async (email, password) => {
+    const res = await API.post('/auth/login', {
+      email,
+      password
+    })
     return res.data
   },
-  async login(email, password) {
-    const res = await api.post('/auth/login', { email, password })
-    return res.data // { access_token, user }
-  },
+
+  register: async (userData) => {
+    const res = await API.post('/auth/register', userData)
+    return res.data
+  }
 }
+
+export default authService

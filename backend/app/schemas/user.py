@@ -15,6 +15,17 @@ class UserLogin(BaseModel):
     password: str
 
 
+class AuthUserOut(BaseModel):
+    id: str
+    full_name: str
+    email: str
+    phone: str | None = None
+    kyc_status: KYCStatus | str = KYCStatus.PENDING
+    digilocker_verified: bool = False
+    role: str = "user"
+    created_at: datetime | None = None
+
+
 class UserOut(BaseModel):
     id: str
     full_name: str
@@ -30,4 +41,4 @@ class UserOut(BaseModel):
 class TokenOut(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    user: UserOut
+    user: AuthUserOut

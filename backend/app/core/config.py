@@ -20,6 +20,11 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     jwt_expire_minutes: int = 1440
 
+    # Demo insurer-agent credentials for back-office review login.
+    agent_email: str = "agent@insuretrace.local"
+    agent_password: str = "Agent@123"
+    agent_name: str = "InsureTrace Agent"
+
     class Config:
         env_file = ".env"
         case_sensitive = False

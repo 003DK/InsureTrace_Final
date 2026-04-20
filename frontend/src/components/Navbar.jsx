@@ -47,7 +47,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link to="/dashboard" className={`font-body text-sm font-medium transition-colors ${location.pathname.startsWith('/dashboard') ? 'text-cyan-accent' : 'text-slate-400 hover:text-white'}`}>Dashboard</Link>
-              <Link to="/claim" className={`font-body text-sm font-medium transition-colors ${location.pathname==='/claim' ? 'text-cyan-accent' : 'text-slate-400 hover:text-white'}`}>New Claim</Link>
+              {user.role !== 'agent' && (<Link to="/claim" className={`font-body text-sm font-medium transition-colors ${location.pathname==='/claim' ? 'text-cyan-accent' : 'text-slate-400 hover:text-white'}`}>New Claim</Link>)}
               <div className="relative">
                 <button onClick={() => setDropOpen(!dropOpen)}
                   className="flex items-center gap-2 glass-light rounded-xl px-4 py-2 hover:border-cyan-accent/30 transition-all">
@@ -97,7 +97,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link to="/dashboard" className="text-slate-300 py-2" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-              <Link to="/claim" className="text-slate-300 py-2" onClick={() => setMenuOpen(false)}>New Claim</Link>
+              {user.role !== 'agent' && <Link to="/claim" className="text-slate-300 py-2" onClick={() => setMenuOpen(false)}>New Claim</Link>}
               <button onClick={handleLogout} className="text-red-400 text-left py-2">Logout</button>
             </>
           )}
