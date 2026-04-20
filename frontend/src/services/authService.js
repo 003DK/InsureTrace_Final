@@ -1,21 +1,33 @@
-import axios from 'axios'
-
-const API = axios.create({
-  baseURL: 'http://127.0.0.1:8000/api/v1'
-})
+import api from './api'
 
 const authService = {
-  login: async (email, password) => {
-    const res = await API.post('/auth/login', {
+  async login(email, password) {
+    const res = await api.post('/auth/login', {
       email,
-      password
+      password,
     })
+
+    const data = res.data
+
+    // ✅ STORE TOKEN (CRITICAL FIX)
+    localStorage.setItem('it_token', data.access_token)
+    localStorage.setItem('it_user', JSON.stringify(data.user))
+
+    return data
+  },
+
+  async register(userData) {
+    const res = await api.post('/auth/register', userData)
     return res.data
   },
 
-  register: async (userData) => {
-    const res = await API.post('/auth/register', userData)
-    return res.data
+  logout() {
+    localStorage.removeItem('it_token')
+    localStorage.removeItem('it_user')
+  },
+
+  getUser() {
+    return JSON.parse(localStorage.getItem('it_user'))
   }
 }
 
